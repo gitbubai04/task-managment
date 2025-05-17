@@ -164,3 +164,34 @@ export const UserLoginController = async (req: Request, res: Response) => {
     }
 }
 
+// user logout controller
+export const UserLogoutController = async (req: Request, res: Response) => {
+    try {
+        res.clearCookie('token_tasktrackr',
+            {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+            }
+        );
+        res.status(HTTP_STATUSCODE.OK).json({
+            success: true,
+            message: 'User logged out successfully',
+        });
+    } catch (error: unknown | ApiError) {
+        console.error('Error in userSignUpController:', error);
+
+        if (error instanceof ApiError) {
+            res.status(error.status).json({
+                success: false,
+                message: error.message,
+            });
+        } else {
+            res.status(HTTP_STATUSCODE.INTERNAL_ERROR).json({
+                success: false,
+                message: HTTPS_MESSAGE.INTERNAL_ERROR,
+            });
+        }
+    }
+}
+
