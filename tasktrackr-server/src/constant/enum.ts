@@ -1,0 +1,4 @@
+export const GENDER = ["male", "female", "other"]
+export const TASK_STATUS = ["todo", "pending", "in-progress", "completed"]
+export const PROFESSION = ["developer", "designer", "manager", "tester", "other"]
+export const ROLE = ["admin", "user"]
