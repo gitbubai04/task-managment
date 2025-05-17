@@ -83,7 +83,6 @@ export const userSignUpController = async (req: Request, res: Response) => {
                 message: error.message,
             });
         } else {
-            // logger.error(`Unknown error occurred: ${error}`);
             res.status(HTTP_STATUSCODE.INTERNAL_ERROR).json({
                 success: false,
                 message: HTTPS_MESSAGE.INTERNAL_ERROR,
@@ -117,22 +116,36 @@ export const UserLoginController = async (req: Request, res: Response) => {
             throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Invalid email Address');
         }
 
+        if (!user.is_active || user.is_deleted) throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'User is deleted or inactive');
+
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
             throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Wrong password!');
         }
 
+        // set last login at
+        user.last_login = new Date();
+        await user.save();
+
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-            expiresIn: '1d',
+            expiresIn: '7d',
+        });
+
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 7);
+
+        res.cookie('token_tasktrackr', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            expires: expiryDate,
         });
 
         res.status(HTTP_STATUSCODE.OK).json({
             success: true,
             message: 'User logged in successfully',
-            user: {
-                role: user.role
-            },
-            token,
+            role: user.role
+
         });
     } catch (error: unknown | ApiError) {
         console.error('Error in userSignUpController:', error);

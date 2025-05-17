@@ -1,7 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { IUser } from '../interface/user.interface';
 import { GENDER, PROFESSION, ROLE } from '../constant/enum';
-import { EmailRegex, PasswordRegex, PhoneRegex } from '../constant/validator';
 
 const userSchema = new Schema<IUser>({
     name: {
@@ -54,6 +53,25 @@ const userSchema = new Schema<IUser>({
         type: String,
         required: true,
     },
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    },
+    last_login: {
+        type: Date
+    },
+    is_deleted: {
+        type: Boolean,
+        default: false
+    },
+    is_active: {
+        type: Boolean,
+        default: true
+    }
 });
 
 export default mongoose.model<IUser>('User', userSchema);
