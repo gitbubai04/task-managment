@@ -144,8 +144,9 @@ export const UserLoginController = async (req: Request, res: Response) => {
         res.status(HTTP_STATUSCODE.OK).json({
             success: true,
             message: 'User logged in successfully',
-            role: user.role
-
+            data: {
+                role: user.role
+            }
         });
     } catch (error: unknown | ApiError) {
         console.error('Error in userSignUpController:', error);
