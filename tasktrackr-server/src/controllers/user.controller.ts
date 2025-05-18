@@ -3,6 +3,9 @@ import { ApiError } from '../utils/error.util';
 import { HTTP_STATUSCODE, HTTPS_MESSAGE } from '../constant/http.constant';
 import userModel from '../models/user.model';
 import { TASK_STATUS } from '../constant/enum';
+import { validateFiles } from '../utils/validateRequiredFields';
+import { deleteAndUploadImage } from '../utils/fileUpload.util';
+import { UploadedFile } from 'express-fileupload';
 
 // get all users for admin
 export const getUsersController = async (req: Request, res: Response) => {
@@ -147,6 +150,45 @@ export const changeUserStatusController = async (req: Request, res: Response) =>
         res.status(HTTP_STATUSCODE.OK).json({
             success: true,
             message: 'User status change to ' + status,
+        })
+    } catch (error: unknown | ApiError) {
+        if (error instanceof ApiError) {
+            res.status(error.status).json({ success: false, message: error.message });
+        } else {
+            res.status(HTTP_STATUSCODE.INTERNAL_ERROR).json({ success: false, message: HTTPS_MESSAGE.INTERNAL_ERROR });
+        }
+    }
+}
+
+// update profile image by id
+export const updateProfileImageController = async (req: Request, res: Response) => {
+    try {
+        const { userId: user_id } = res.locals;
+        let image;
+
+        const user = await userModel.findById({ _id: user_id, is_deleted: false });
+
+        if (!validateFiles(req.files, 'image')) {
+            throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Invalid image!');
+        }
+
+        image = await deleteAndUploadImage(req?.files?.image as UploadedFile, "profile_image" + Date.now(), user?.image);
+
+        const updatedUser = await userModel.findByIdAndUpdate({ _id: user_id, is_deleted: false },
+            {
+                $set: {
+                    image: image,
+                    updatedBy: user_id,
+                    updatedAt: new Date(),
+                }
+            },
+        );
+        if (!updatedUser) {
+            throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'User not found!');
+        }
+        res.status(HTTP_STATUSCODE.OK).json({
+            success: true,
+            message: 'Profile image updated successfully',
         })
     } catch (error: unknown | ApiError) {
         if (error instanceof ApiError) {

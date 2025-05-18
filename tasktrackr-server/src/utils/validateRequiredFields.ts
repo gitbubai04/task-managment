@@ -1,3 +1,5 @@
+import fileUpload from "express-fileupload";
+
 export const validateRequiredFields = (
     data: Record<string, any>,
     requiredFields: string[]
@@ -10,3 +12,11 @@ export const validateRequiredFields = (
     }
     return null;
 };
+
+export function validateFiles(files: fileUpload.FileArray | null | undefined, ...fileNames: string[]): boolean {
+    if (!files) return false;
+    for (const file of fileNames) {
+        if (!files[file]) return false;
+    }
+    return true;
+}
