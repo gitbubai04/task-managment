@@ -10,37 +10,21 @@ import { UploadedFile } from 'express-fileupload';
 // get all users for admin
 export const getUsersController = async (req: Request, res: Response) => {
     try {
-        const { page = 1, limit = 10, search = '' } = req.query;
-
-        const pageNumber = parseInt(page as string, 10);
-        const limitNumber = parseInt(limit as string, 10);
-        const skip = (pageNumber - 1) * limitNumber;
+        const { search = '' } = req.query;
 
         const query = {
+            is_deleted: false,
             ...(search ? { name: { $regex: new RegExp(search as string, "i") } } : {})
         };
 
         const users = await userModel
             .find(query)
-            .select('-password')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limitNumber);
-
-        const total = await userModel.countDocuments(query);
-        const totalPages = Math.ceil(total / limitNumber);
         const totalUser = await userModel.countDocuments()
         res.status(HTTP_STATUSCODE.OK).json({
             success: true,
             data: {
                 users,
                 totalUser,
-                pagination: {
-                    total,
-                    page: pageNumber,
-                    totalPages,
-                    limit: limitNumber,
-                },
             },
 
         });
@@ -128,16 +112,12 @@ export const changeUserStatusController = async (req: Request, res: Response) =>
     try {
         const { id } = req.params;
         const { userId: user_id } = res.locals;
-        const { status } = req.body;
-
-        if (!TASK_STATUS.includes(status)) {
-            throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Invalid status!');
-        }
+        const { is_active } = req.body;
 
         const user = await userModel.findByIdAndUpdate({ _id: id, is_deleted: false },
             {
                 $set: {
-                    status,
+                    is_active,
                     updatedBy: user_id,
                     updatedAt: new Date(),
                 }
@@ -149,7 +129,7 @@ export const changeUserStatusController = async (req: Request, res: Response) =>
 
         res.status(HTTP_STATUSCODE.OK).json({
             success: true,
-            message: 'User status change to ' + status,
+            message: `User ${is_active ? 'activated' : 'deactivated'} successfully`,
         })
     } catch (error: unknown | ApiError) {
         if (error instanceof ApiError) {

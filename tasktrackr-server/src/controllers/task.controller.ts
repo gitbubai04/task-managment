@@ -64,8 +64,8 @@ export const createTaskController = async (req: Request, res: Response) => {
 // get all tasks
 export const getAllTaskController = async (req: Request, res: Response) => {
     try {
-
-        const tasks = await taskModel.find({ is_deleted: false }).sort({ createdAt: -1 });
+        const { userId: user_id } = res.locals;
+        const tasks = await taskModel.find({ is_deleted: false, createdBy: user_id }).sort({ createdAt: -1 });
 
         const groupedTasks: Record<string, typeof tasks> = {};
         for (const status of TASK_STATUS) {
@@ -116,7 +116,7 @@ export const updateTaskController = async (req: Request, res: Response) => {
             throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Invalid priority!');
         }
 
-        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false },
+        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false, createdBy: user_id },
             {
                 title,
                 description: description || '',
@@ -148,7 +148,8 @@ export const updateTaskController = async (req: Request, res: Response) => {
 export const getTaskByIdController = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const task = await taskModel.findById({ _id: id, is_deleted: false });
+        const { userId: user_id } = res.locals;
+        const task = await taskModel.findById({ _id: id, is_deleted: false, createdBy: user_id });
         if (!task) {
             throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Task not found!');
         }
@@ -173,7 +174,7 @@ export const changeStatusController = async (req: Request, res: Response) => {
             throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, 'Invalid status!');
         }
 
-        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false },
+        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false, createdBy: user_id },
             {
                 $set: {
                     status,
@@ -205,7 +206,7 @@ export const deleteTaskController = async (req: Request, res: Response) => {
         const { id } = req.params;
         const { userId: user_id } = res.locals;
 
-        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false },
+        const task = await taskModel.findByIdAndUpdate({ _id: id, is_deleted: false, createdBy: user_id },
             {
                 $set: {
                     is_deleted: true,

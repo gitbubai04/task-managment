@@ -12,7 +12,7 @@ import { authClear } from "@/store/slices/authSlice";
 import ModeToggle from "./mode-toggle";
 
 function Menu() {
-  const { isLoggedIn } = useSelector((state: RootState) => state.authUser)
+  const { isLoggedIn } = useSelector((state: RootState) => state.authUser || {})
   const dispatch = useDispatch();
   const [logoutInitiated, setLogoutInitiated] = useState(false);
   const [logoutRes, , logoutRequest] = useAxios(LOGOUT_URL, "POST");

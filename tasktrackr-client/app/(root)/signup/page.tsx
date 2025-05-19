@@ -32,7 +32,7 @@ interface ISignUpPayload {
 }
 
 export default function SignUpPage() {
-    const { isLoggedIn, role } = useSelector((state: RootState) => state.authUser)
+    const { isLoggedIn } = useSelector((state: RootState) => state.authUser)
     const router = useRouter()
     const [registerRes, isSubmitting, registerRequest] = useAxios<ISignUpPayload, null>(REGISTER_URL, "POST");
     useSnackbar(registerRes?.message, registerRes?.success ? "success" : "error");
@@ -63,7 +63,7 @@ export default function SignUpPage() {
 
     useEffect(() => {
         if (registerRes?.success) setTimeout(() => router.replace('/signin'), AXIOS_TIME);
-    }, [registerRes])
+    }, [registerRes?.success, router])
 
     if (isLoggedIn) router.replace('/');
 

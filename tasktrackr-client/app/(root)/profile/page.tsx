@@ -1,7 +1,7 @@
 "use client";
 import useAxios from "@/hooks/useAxios.hook";
 import { IUserProfile } from "@/interface";
-import { USER_PROFILE_CHANGE_URL, USER_PROFILE_URL } from "@/lib/constants/api.constant";
+import { ADMIN_PROFILE_CHANGE_URL, ADMIN_PROFILE_URL, USER_PROFILE_CHANGE_URL, USER_PROFILE_URL } from "@/lib/constants/api.constant";
 import React, { useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,13 +10,19 @@ import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import SignInPage from "../signin/page";
+import useSnackbar from "@/hooks/useSnackbar.hook";
 
-function page() {
+function Profile() {
+    const { isLoggedIn, role } = useSelector((state: RootState) => state?.authUser || {});
     const fileRef = useRef<HTMLInputElement>(null);
     const [user, setUser] = React.useState<IUserProfile | null>(null);
-    const [profileRes, , profileRequest] = useAxios<IUserProfile, null>(USER_PROFILE_URL, "GET");
-    const [changeProfileRes, , changeProfileRequest] = useAxios<FormData, null>(USER_PROFILE_CHANGE_URL, "PATCH");
+    const [profileRes, , profileRequest] = useAxios<IUserProfile, null>(role === "admin" ? ADMIN_PROFILE_URL : USER_PROFILE_URL, "GET");
+    const [changeProfileRes, , changeProfileRequest] = useAxios<FormData, null>(role === "admin" ? ADMIN_PROFILE_CHANGE_URL : USER_PROFILE_CHANGE_URL, "PATCH");
     const [preview, setPreview] = useState<string>("");
+    useSnackbar(changeProfileRes?.message, changeProfileRes?.success ? "success" : "error");
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -39,6 +45,10 @@ function page() {
         profileRequest();
     }, []);
 
+    if (!isLoggedIn) {
+        return <SignInPage />;
+    }
+
     return (
         <div className="max-w-xl mx-auto mt-10 p-4">
             <Card className="shadow-lg">
@@ -54,10 +64,10 @@ function page() {
                         <Button
                             size="icon"
                             variant="secondary"
-                            className="absolute bottom-0 right-0 rounded-full"
+                            className="absolute bottom-0 right-0 rounded-full h-6 w-6"
                             onClick={() => fileRef.current?.click()}
                         >
-                            <Camera className="w-4 h-4" />
+                            <Camera className="w-2 h-2" />
                         </Button>
                         <Input
                             type="file"
@@ -114,4 +124,4 @@ function page() {
     );
 }
 
-export default page;
+export default Profile;

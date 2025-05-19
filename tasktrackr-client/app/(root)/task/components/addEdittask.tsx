@@ -1,12 +1,10 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,23 +18,20 @@ import {
     SelectContent,
     SelectItem,
 } from "@/components/ui/select";
-
 import { useFormik } from "formik";
 import * as Yup from "yup";
-
-
-export interface TaskFormData {
-    title: string;
-    description: string;
-    dueDate: string;
-    status: string;
-    priority: string;
-}
+import { ITask, ITaskFormData } from "@/interface";
+import { priorityOptions, statusOptions } from "@/lib/constants/options.constant";
+import { ADD_TASK_URL, UPDATE_TASK_BY_ID_URL } from "@/lib/constants/api.constant";
+import useAxios from "@/hooks/useAxios.hook";
+import useSnackbar from "@/hooks/useSnackbar.hook";
+import moment from "moment";
 
 interface TaskDialogProps {
-    initialData?: TaskFormData;
+    editData?: ITask | null;
     open?: boolean;
     setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+    setFetchData?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const validationSchema = Yup.object().shape({
@@ -48,44 +43,63 @@ const validationSchema = Yup.object().shape({
 });
 
 export default function TaskDialog({
-    initialData,
+    editData,
     open,
-    setOpen
+    setOpen,
+    setFetchData,
 }: TaskDialogProps) {
-    const formik = useFormik<TaskFormData>({
-        initialValues: initialData || {
-            title: "",
-            description: "",
-            dueDate: "",
-            status: "pending",
-            priority: "low",
+    const [taskRes, isSubmitting, taskRequest] = useAxios<ITaskFormData, null>(ADD_TASK_URL, "POST");
+    const [updateTaskRes, isUpdateSubmitting, updateTaskRequest] = useAxios<ITaskFormData, null>(UPDATE_TASK_BY_ID_URL + "/" + editData?._id, "PUT");
+    useSnackbar(taskRes?.message, taskRes?.success ? "success" : "error");
+    useSnackbar(updateTaskRes?.message, updateTaskRes?.success ? "success" : "error");
+
+    const formik = useFormik<ITaskFormData>({
+        initialValues: {
+            title: editData?.title || "",
+            description: editData?.description || "",
+            dueDate: editData?.dueDate || "",
+            status: editData?.status || "todo",
+            priority: editData?.priority || "none",
         },
         enableReinitialize: true,
         validationSchema,
         onSubmit: (values) => {
-            console.log(values);
+            if (!!editData) {
+                updateTaskRequest(values);
+            } else {
+                taskRequest(values);
+            }
         },
     });
 
-    const handleSelectChange = (field: keyof TaskFormData, value: string) => {
+    const handleSelectChange = (field: keyof ITaskFormData, value: string) => {
         formik.setFieldValue(field, value);
     };
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         if (setOpen) {
             setOpen(false);
         }
-    };
+    }, [setOpen]);
+
+    React.useEffect(() => {
+        if (taskRes?.success || updateTaskRes?.success) {
+            handleClose();
+            if (setFetchData)
+                setFetchData(true);
+
+        }
+    }, [taskRes, handleClose, setFetchData, updateTaskRes]);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>{initialData ? "Edit Task" : "Create New Task"}</DialogTitle>
+                    <DialogTitle>{editData ? "Edit Task" : "Create New Task"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={formik.handleSubmit} className="grid gap-4 py-4">
                     <div>
-                        <Label htmlFor="title">Title</Label>
+                        <Label htmlFor="title" className="mb-2 block">Title</Label>
                         <Input
                             id="title"
                             name="title"
@@ -97,7 +111,7 @@ export default function TaskDialog({
                         )}
                     </div>
                     <div>
-                        <Label htmlFor="description">Description</Label>
+                        <Label htmlFor="description" className="mb-2 block">Description</Label>
                         <Textarea
                             id="description"
                             name="description"
@@ -109,12 +123,12 @@ export default function TaskDialog({
                         )}
                     </div>
                     <div>
-                        <Label htmlFor="dueDate">Due Date</Label>
+                        <Label htmlFor="dueDate" className="mb-2 block">Due Date</Label>
                         <Input
                             id="dueDate"
                             name="dueDate"
                             type="date"
-                            value={formik.values.dueDate}
+                            value={formik.values.dueDate ? moment(formik.values.dueDate).format("YYYY-MM-DD") : ""}
                             onChange={formik.handleChange}
                         />
                         {formik.touched.dueDate && formik.errors.dueDate && (
@@ -123,7 +137,7 @@ export default function TaskDialog({
                     </div>
                     <div className="flex gap-4">
                         <div className="flex-1">
-                            <Label>Status</Label>
+                            <Label className="mb-2 block">Status</Label>
                             <Select
                                 value={formik.values.status}
                                 onValueChange={(value) => handleSelectChange("status", value)}
@@ -132,14 +146,16 @@ export default function TaskDialog({
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="pending">Pending</SelectItem>
-                                    <SelectItem value="in-progress">In Progress</SelectItem>
-                                    <SelectItem value="completed">Completed</SelectItem>
+                                    {statusOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="flex-1">
-                            <Label>Priority</Label>
+                            <Label className="mb-2 block">Priority</Label>
                             <Select
                                 value={formik.values.priority}
                                 onValueChange={(value) => handleSelectChange("priority", value)}
@@ -148,9 +164,11 @@ export default function TaskDialog({
                                     <SelectValue placeholder="Select priority" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="low">Low</SelectItem>
-                                    <SelectItem value="medium">Medium</SelectItem>
-                                    <SelectItem value="high">High</SelectItem>
+                                    {priorityOptions.map((option) => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -160,7 +178,7 @@ export default function TaskDialog({
                         <Button type="button" variant="outline" onClick={handleClose}>
                             Cancel
                         </Button>
-                        <Button type="submit">{initialData ? "Update" : "Create"}</Button>
+                        <Button type="submit" disabled={isSubmitting || isUpdateSubmitting}>{editData ? "Update" : "Create"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

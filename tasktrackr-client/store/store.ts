@@ -1,9 +1,8 @@
 export const stateName: string = `tasktrackr:state`;
-export const storage: Storage = sessionStorage;
 
 export const loadState = (): Record<string, any> | null => {
     try {
-        const state = storage.getItem(stateName);
+        const state = sessionStorage?.getItem(stateName);
         if (!state) {
             return {};
         }
@@ -22,8 +21,8 @@ export const saveState = (localState: Record<string, any> | null): void => {
             return;
         }
 
-        storage.clear();
-        storage.setItem(stateName, JSON.stringify(localState));
+        sessionStorage?.clear();
+        sessionStorage?.setItem(stateName, JSON.stringify(localState));
 
     } catch (error) {
         console.error('Error saving state:', error);

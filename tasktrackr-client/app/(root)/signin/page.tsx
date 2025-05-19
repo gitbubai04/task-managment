@@ -28,7 +28,7 @@ interface ILoginPayload {
 }
 
 export default function SignInPage() {
-    const { isLoggedIn, role } = useSelector((state: RootState) => state.authUser)
+    const { isLoggedIn } = useSelector((state: RootState) => state?.authUser || {});
     const router = useRouter()
     const dispatch = useDispatch();
     const [loginRes, isLogging, loginRequest] = useAxios<ILoginPayload, null>(LOGIN_URL, "POST");
