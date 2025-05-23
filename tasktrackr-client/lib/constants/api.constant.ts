@@ -15,6 +15,7 @@ export const GET_TASK_BY_ID_URL = API_PREFIX + "/task/get";
 export const UPDATE_TASK_BY_ID_URL = API_PREFIX + "/task/update";
 export const DELETE_TASK_BY_ID_URL = API_PREFIX + "/task/delete/";
 export const CHANGE_TASK_STATUS_BY_ID_URL = API_PREFIX + "/task/change-status/";
+export const GET_CALENDAR_TASKS_URL = API_PREFIX + "/task/get-all";
 
 export const GET_USERS_URL = ADMIN_PREFIX + "/user/all";
 export const DELETE_USER_BY_ID_URL = ADMIN_PREFIX + "/user/delete/";

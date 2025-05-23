@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import React from "react";
 import { GET_TASKS_URL } from "@/lib/constants/api.constant";
 import { ITaskBoard } from "@/interface";
 import useAxios from "@/hooks/useAxios.hook";
 import KanbanBoard from "./components/kanBanBoard";
 import TaskDialog from "./components/addEdittask";
+import Link from "next/link";
 
 function TaskView() {
     const [open, setOpen] = React.useState(false);
@@ -39,10 +40,18 @@ function TaskView() {
             <div className="mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-semibold">Task Management</h1>
-                    <Button className="btn btn-primary" onClick={() => setOpen(true)}>
-                        <Plus />
-                        Add Task
-                    </Button>
+
+                    <div className="flex gap-3 items-center">
+                        <Button variant='ghost' asChild>
+                            <Link href="/calendar">
+                                <Calendar /> View Calendar
+                            </Link>
+                        </Button>
+                        <Button className="btn btn-primary" onClick={() => setOpen(true)}>
+                            <Plus />
+                            Add Task
+                        </Button>
+                    </div>
                 </div>
 
                 {/* <div className="text-muted-foreground text-center">No tasks to show yet.</div> */}

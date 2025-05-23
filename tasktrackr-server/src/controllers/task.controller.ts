@@ -61,8 +61,8 @@ export const createTaskController = async (req: Request, res: Response) => {
     }
 };
 
-// get all tasks
-export const getAllTaskController = async (req: Request, res: Response) => {
+// get all group tasks
+export const getAllTaskGroupController = async (req: Request, res: Response) => {
     try {
         const { userId: user_id } = res.locals;
         const tasks = await taskModel.find({ is_deleted: false, createdBy: user_id }).sort({ createdAt: -1 });
@@ -83,6 +83,20 @@ export const getAllTaskController = async (req: Request, res: Response) => {
             success: true,
             data: groupedTasks,
         });
+    } catch (error: unknown | ApiError) {
+        if (error instanceof ApiError) {
+            res.status(error.status).json({ success: false, message: error.message });
+        } else {
+            res.status(HTTP_STATUSCODE.INTERNAL_ERROR).json({ success: false, message: HTTPS_MESSAGE.INTERNAL_ERROR });
+        }
+    }
+};
+
+export const getAllTaskController = async (req: Request, res: Response) => {
+    try {
+        const { userId: user_id } = res.locals;
+        const tasks = await taskModel.find({ is_deleted: false, createdBy: user_id }).sort({ createdAt: -1 });
+        res.status(HTTP_STATUSCODE.OK).json({ success: true, data: tasks });
     } catch (error: unknown | ApiError) {
         if (error instanceof ApiError) {
             res.status(error.status).json({ success: false, message: error.message });
