@@ -28,7 +28,7 @@ export const createCatagoryController = async (req: Request, res: Response) => {
     }
     res.status(HTTP_STATUSCODE.CREATE).json({
       success: true,
-      message: "Task created successfully",
+      message: "Catagory created successfully",
     });
   } catch (error: unknown | ApiError) {
     if (error instanceof ApiError) {
@@ -74,7 +74,7 @@ export const updateCatagoryController = async (req: Request, res: Response) => {
     }
     res.status(HTTP_STATUSCODE.OK).json({
       success: true,
-      message: "Priority updated successfully",
+      message: "Catagory updated successfully",
     });
   } catch (error: unknown | ApiError) {
     if (error instanceof ApiError) {
@@ -95,10 +95,12 @@ export const updateCatagoryController = async (req: Request, res: Response) => {
 export const getAllCatagoryController = async (req: Request, res: Response) => {
   try {
     const { userId: user_id } = res.locals;
-    const priority = await categoryModel.find({
-      is_deleted: false,
-      createdBy: user_id,
-    });
+    const priority = await categoryModel
+      .find({
+        is_deleted: false,
+        createdBy: user_id,
+      })
+      .select("_id name color");
     if (!priority) {
       throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, "Priority not found!");
     }
@@ -137,7 +139,7 @@ export const deleteCatagoryController = async (req: Request, res: Response) => {
 
     res.status(HTTP_STATUSCODE.OK).json({
       success: true,
-      message: "Priority deleted successfully",
+      message: "Catagory deleted successfully",
     });
   } catch (error: unknown | ApiError) {
     if (error instanceof ApiError) {

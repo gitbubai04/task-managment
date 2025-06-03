@@ -95,10 +95,12 @@ export const updatePriorityController = async (req: Request, res: Response) => {
 export const getAllPriorityController = async (req: Request, res: Response) => {
   try {
     const { userId: user_id } = res.locals;
-    const priority = await priorityModel.find({
-      is_deleted: false,
-      createdBy: user_id,
-    });
+    const priority = await priorityModel
+      .find({
+        is_deleted: false,
+        createdBy: user_id,
+      })
+      .select("_id name color");
     if (!priority) {
       throw new ApiError(HTTP_STATUSCODE.BAD_REQUEST, "Priority not found!");
     }

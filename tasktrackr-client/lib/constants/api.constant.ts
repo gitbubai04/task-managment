@@ -19,4 +19,8 @@ export const GET_CALENDAR_TASKS_URL = API_PREFIX + "/task/get-all";
 
 export const GET_USERS_URL = ADMIN_PREFIX + "/user/all";
 export const DELETE_USER_BY_ID_URL = ADMIN_PREFIX + "/user/delete/";
-export const CHANGE_USER_STATUS_BY_ID_URL = ADMIN_PREFIX + "/user/change-status/";
+export const CHANGE_USER_STATUS_BY_ID_URL =
+  ADMIN_PREFIX + "/user/change-status/";
+
+export const GET_ALL_PRIORITY = API_PREFIX + "/priority/all";
+export const GET_ALL_CATAGORY = API_PREFIX + "/catagory/all";

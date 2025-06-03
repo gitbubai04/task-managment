@@ -84,10 +84,16 @@ export const getAllTaskGroupController = async (
       { $match: { is_deleted: false, createdBy: user_id } },
       {
         $lookup: {
-          from: "Category",
+          from: "categories",
           let: { catId: "$catagory" },
           pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$catId"] } } },
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", { $toObjectId: "$$catId" }],
+                },
+              },
+            },
             { $project: { _id: 1, name: 1, color: 1 } },
           ],
           as: "category_details",
@@ -95,19 +101,47 @@ export const getAllTaskGroupController = async (
       },
       {
         $lookup: {
-          from: "Priority",
+          from: "priorities",
           let: { priorityId: "$priority" },
           pipeline: [
-            { $match: { $expr: { $eq: ["$_id", "$$priorityId"] } } },
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", { $toObjectId: "$$priorityId" }],
+                },
+              },
+            },
             { $project: { _id: 1, name: 1, color: 1 } },
           ],
           as: "priority_details",
         },
       },
-      { $unwind: "$category_details" },
-      { $unwind: "$priority_details" },
-      //   { $project: { category_details: 1, priority_details: 1, status: 1, } }
+      {
+        $unwind: {
+          path: "$category_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$priority_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // {
+      //   $project: {
+      //     _id: 1,
+      //     title: 1,
+      //     description: 1,
+      //     dueDate: 1,
+      //     priority: "$priority_details",
+      //     catagory: "$category_details",
+      //     status: 1,
+      //     createdAt: 1,
+      //   },
+      // },
     ]);
+
     const groupedTasks: Record<string, typeof tasks> = {};
     for (const status of TASK_STATUS) {
       groupedTasks[status] = [];
@@ -138,9 +172,67 @@ export const getAllTaskGroupController = async (
 export const getAllTaskController = async (req: Request, res: Response) => {
   try {
     const { userId: user_id } = res.locals;
-    const tasks = await taskModel
-      .find({ is_deleted: false, createdBy: user_id })
-      .sort({ createdAt: -1 });
+    const tasks = await taskModel.aggregate([
+      { $match: { is_deleted: false, createdBy: user_id } },
+      {
+        $lookup: {
+          from: "categories",
+          let: { catId: "$catagory" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", { $toObjectId: "$$catId" }],
+                },
+              },
+            },
+            { $project: { _id: 1, name: 1, color: 1 } },
+          ],
+          as: "category_details",
+        },
+      },
+      {
+        $lookup: {
+          from: "priorities",
+          let: { priorityId: "$priority" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$_id", { $toObjectId: "$$priorityId" }],
+                },
+              },
+            },
+            { $project: { _id: 1, name: 1, color: 1 } },
+          ],
+          as: "priority_details",
+        },
+      },
+      {
+        $unwind: {
+          path: "$category_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $unwind: {
+          path: "$priority_details",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // {
+      //   $project: {
+      //     _id: 1,
+      //     title: 1,
+      //     description: 1,
+      //     dueDate: 1,
+      //     priority: "$priority_details",
+      //     catagory: "$category_details",
+      //     status: 1,
+      //     createdAt: 1,
+      //   },
+      // },
+    ]);
     res.status(HTTP_STATUSCODE.OK).json({ success: true, data: tasks });
   } catch (error: unknown | ApiError) {
     if (error instanceof ApiError) {
